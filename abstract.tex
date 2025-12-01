@@ -1,1 +1,5 @@
 \chapter*{Sommario}
+
+L'Intelligenza Artificiale, pur essenziale per la malware detection, rimane vulnerabile agli attacchi adversarial. Questa tesi indaga la robustezza dei classificatori per file Windows PE contro il \textit{Data Poisoning}, focalizzandosi sul obiettivo di indurre falsi positivi trasformando file legittimi in minacce apparenti, minando così la fiducia nel sistema di rilevamento.
+
+Attraverso il confronto degli algoritmi black-box \textit{GAMMA} e \textit{OLIVANDER}, sono state testate strategie di \textit{Label Flipping} e \textit{Clean Label} per avvelenare un modello bersaglio. I risultati evidenziano che solo il Label Flipping compromette efficacemente le prestazioni, mentre il Clean Label agisce involontariamente come rafforzamento del modello. Lo studio conferma inoltre l'elevata efficacia di OLIVANDER, la trasferibilità degli attacchi tra diverse architetture e la loro capacità di eludere anche validazioni esterne come VirusTotal.
