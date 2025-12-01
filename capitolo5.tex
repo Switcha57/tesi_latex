@@ -87,7 +87,7 @@ Inizialmente, viene valutata la performance del modello bersaglio \(DNN_{target}
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.5\textwidth]{images/dnn4000test.png}
-    \caption{Matrice di confusione di \(DNN_{target}\) sul Test Set}
+    \caption{Matrice di confusione di \(DNN_{target}\) sul Test Set di WIPE4ADV}
     \label{fig:dnn_test_confusion}
 \end{figure}
 
@@ -842,7 +842,7 @@ La Figura \ref{fig:poisoning_olivander_vt_comparison} mostra i risultati senza b
     \end{tabular}
 \end{table}
 
-L'obiettivo di questo esperimento è valutare se l'utilizzo esclusivo di esempi adversarial riconosciuti come tali nel mondo reale (validati tramite VirusTotal) mantenga l'efficacia dell'attacco di poisoning. I risultati confermano che, anche limitando l'iniezione ai soli campioni rilevati da VT, l'effetto di avvelenamento persiste rispetto al modello originale. È fisiologico osservare un impatto leggermente ridotto rispetto all'attacco standard, dato il minor numero di esempi iniettati (come riportato in Tabella~\ref{tab:vt_filtered_count}), ma la tendenza al degrado delle performance o alla manipolazione del comportamento del modello rimane evidente. Questo dimostra che la minaccia del poisoning è concreta anche quando si considerano scenari più realistici in cui gli esempi adversarial devono superare controlli di sicurezza esterni.
+L'obiettivo di questo esperimento è valutare se l'utilizzo esclusivo di esempi adversarial riconosciuti come tali nel mondo reale (validati tramite VirusTotal) mantenga l'efficacia dell'attacco di poisoning. I risultati confermano che, anche limitando l'iniezione ai soli campioni rilevati da VT, l'effetto di avvelenamento persiste rispetto al modello originale.Un impatto leggermente ridotto rispetto all'attacco standard, è dato dal minor numero di esempi iniettati (come riportato in Tabella~\ref{tab:vt_filtered_count}), ma la tendenza al degrado delle performance o alla manipolazione del comportamento del modello rimane evidente. Questo dimostra che la minaccia del poisoning è concreta anche quando si considerano scenari più realistici in cui gli esempi adversarial devono superare controlli di sicurezza esterni.
 
 \begin{figure}[htbp]
     \centering

@@ -22,9 +22,13 @@
 _minted*
 
 # latexmk output directory
-build/
-
+# build/
+fonti
+cor
 # OS / editor files
 .DS_Store
 Thumbs.db
 .vscode/ipch
+ideas_capitoli_3_4.txt
+ideas.txt
+idee_capitolo4.txt
