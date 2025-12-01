@@ -1,0 +1,93 @@
+\chapter{Introduzione}
+\label{cap:introduzione}
+
+La sicurezza informatica mira a proteggere sistemi e dati da attività ostili. Con
+il termine “malware” si indicano file o porzioni di codice progettati per compromettere
+i sistemi ottenendo accessi non autorizzati, esfiltrando informazioni, interrompendo
+servizi o danneggiando reti. Negli ultimi anni, l’Intelligenza Artificiale (IA) ha
+assunto un ruolo centrale nel rilevamento del malware: modelli di Machine
+Learning (ML) e Deep Learning (DL) hanno consentito di raggiungere livelli di
+accuratezza elevati, migliorando la capacità dei sistemi anti‑malware di riconoscere
+minacce anche mai osservate prima.
+
+Parallelamente, anche gli avversari hanno evoluto le proprie tecniche. Nel 2024,
+ad esempio, i sistemi di rilevamento di Kaspersky hanno registrato in media 467,000
+nuovi campioni malevoli al giorno, con un incremento significativo del 14\% rispetto al
+2023. Nello stesso periodo, Microsoft Windows è rimasto l’obiettivo privilegiato,
+rappresentando il 93\% dei dati infetti rilevati quotidianamente\cite{kaspersky2024maliciousfiles}. In questo contesto,
+la presente tesi si concentra sui malware in formato Portable Executable (PE)
+per la piattaforma Windows.
+
+Nonostante i recenti progressi, i modelli decisionali basati su IA presentano vulnerabilità
+strutturali agli attacchi Adversarial: piccole perturbazioni intenzionali
+applicate all'input possono indurre il modello a produrre classificazioni errate,
+consentendo l'evasione dei meccanismi di difesa. Questo lavoro esplora tali
+vulnerabilità nel dominio dei file Windows PE. 
+
+In particolare, questa tesi confronta due algoritmi di poisoning, \textit{Olivander} 
+e \textit{Gamma}, in uno scenario atipico rispetto alla letteratura tradizionale. 
+Invece di perturbare campioni della classe \textit{Malware} per farli classificare 
+erroneamente come \textit{Goodware} (il caso tipico di evasione), invertiamo la 
+prospettiva: modifichiamo file legittimi (\textit{Goodware}) con l'obiettivo di 
+indurre il classificatore a etichettarli come \textit{Malware}. Questo approccio 
+permette di studiare la robustezza dei modelli di rilevamento rispetto a falsi 
+positivi sistematici e analizzare come tecniche di poisoning possano compromettere 
+la fiducia nei sistemi anti-malware.
+
+% \section{Contributi}
+
+% I principali contributi di questa tesi sono i seguenti:
+
+% \begin{itemize}
+%     \item \textbf{Analisi comparativa di algoritmi di poisoning}: confrontiamo le prestazioni 
+%     di \textit{Olivander} e \textit{Gamma} in uno scenario invertito, valutando la loro capacità 
+%     di trasformare file Goodware in campioni classificati come Malware, misurando l'efficacia 
+%     delle perturbazioni generate e il loro impatto sulla funzionalità dei file.
+    
+%     \item \textbf{Studio della robustezza dei modelli}: analizziamo la vulnerabilità dei 
+%     classificatori basati su Machine Learning agli attacchi di poisoning, con particolare 
+%     attenzione alla generazione di falsi positivi sistematici che possono minare la fiducia 
+%     degli utenti nei sistemi di sicurezza.
+    
+%     \item \textbf{Valutazione della trasferibilità degli attacchi}: studiamo se i campioni 
+%     perturbati generati contro un modello specifico mantengono la loro efficacia quando 
+%     testati su classificatori diversi o su sistemi anti-malware commerciali, fornendo 
+%     indicazioni sulla generalizzabilità degli attacchi di poisoning.
+    
+%     \item \textbf{Analisi delle caratteristiche sfruttate}: esaminiamo quali feature dei 
+%     file Windows PE vengono maggiormente manipolate dagli algoritmi di poisoning per 
+%     ottenere la riclassificazione desiderata, offrendo insight utili per lo sviluppo 
+%     di contromisure più robuste.
+% \end{itemize}
+
+\section{Contributi}
+
+Il resto di questa tesi è organizzato come segue:
+
+\begin{itemize}
+    \item \textbf{Capitolo 2 - Background}: introduce i concetti fondamentali necessari 
+    alla comprensione del lavoro, inclusi il formato Windows PE, l'utilizzo della libreria 
+    LIEF per l'analisi statica dei file eseguibili, e una descrizione degli algoritmi 
+    di attacco black-box che preservano la funzionalità, con particolare focus su 
+    \textit{GAMMA} e \textit{Olivander}.
+    
+    \item \textbf{Capitolo 3 - Stato dell'arte}: presenta una panoramica della letteratura 
+    recente sull'adversarial learning e sulle tecniche di poisoning applicate ai sistemi 
+    di rilevamento malware, posizionando il presente lavoro nel contesto della ricerca 
+    attuale.
+    
+    \item \textbf{Capitolo 4 - Poisoning in Machine Learning}: approfondisce l'utilizzo 
+    di tecniche di Machine Learning e Deep Learning per la malware detection, descrivendo 
+    come vengono estratte le feature dai file PE tramite LIEF e illustrando le metodologie 
+    di poisoning applicate, incluse le strategie di manipolazione delle label e le tecniche 
+    di perturbazione utilizzate negli esperimenti.
+    
+    \item \textbf{Capitolo 5 - Valutazione sperimentale}: descrive il dataset utilizzato, 
+    i dettagli implementativi dei modelli di classificazione e degli algoritmi di attacco, 
+    e presenta un'analisi dettagliata dei risultati ottenuti, includendo valutazioni di 
+    baseline e studi sulla trasferibilità degli attacchi verso classificatori diversi.
+    
+    % \item \textbf{Capitolo 6 - Conclusioni}: riassume i risultati principali della ricerca, 
+    % discute le implicazioni per la sicurezza dei sistemi di rilevamento malware basati su 
+    % IA, e delinea possibili direzioni per lavori futuri.
+\end{itemize}

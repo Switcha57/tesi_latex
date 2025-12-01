@@ -1,0 +1,75 @@
+{
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": false,
+  "latex-workshop.latex.outDir": "build",
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.message.error.show": false,
+  "latex-workshop.message.warning.show": false,
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-pdf",
+        "-shell-escape",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-outdir=build",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk (pdf)",
+      "tools": ["latexmk"]
+    }
+  ],
+  "latex-workshop.clean.enabled": true,
+  "latex-workshop.latex.clean.fileTypes": [
+    "*.aux",
+    "*.bbl",
+    "*.blg",
+    "*.fdb_latexmk",
+    "*.fls",
+    "*.log",
+    "*.out",
+    "*.synctex(busy)",
+    "*.synctex.gz",
+    "*.toc",
+    "*.lof",
+    "*.lot",
+    "*.nav",
+    "*.snm",
+    "*.vrb",
+    "*.xdv",
+    "*.run.xml",
+    "*.bcf",
+    "*.acn",
+    "*.acr",
+    "*.alg",
+    "*.glg",
+    "*.glo",
+    "*.gls",
+    "*.ist",
+    "_minted*",
+    "build/"
+  ],
+  // LaTeX line length settings
+  "[latex]": {
+    "editor.rulers": [125],
+    "editor.wordWrapColumn": 125,
+    "editor.wordWrap": "wordWrapColumn"
+  },
+  // Enable ChkTeX linting for line length
+  "latex-workshop.linting.chktex.enabled": true,
+  "latex-workshop.linting.chktex.exec.path": "chktex",
+  // LTeX settings for grammar and line length awareness
+  "ltex.enabled": ["latex"],
+  "ltex.checkFrequency": "save",
+  "cSpell.words": [
+    "convoluzionali",
+    "secml"
+  ]
+}

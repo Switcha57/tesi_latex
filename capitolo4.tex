@@ -1,0 +1,51 @@
+\chapter{Panoramica dell'approccio di poisoning proposto}
+Nella prima parte, verrà descritto il funzionamento dei sistemi di detection basati su Machine Learning, analizzando in dettaglio il processo di estrazione delle caratteristiche dai file eseguibili Windows (PE) e il ruolo delle moderne tecniche di Deep Learning.
+Successivamente, verranno approfondite le tecniche di Data Poisoning applicate, descrivendo come la manipolazione del dataset di addestramento — attraverso strategie come il Label Flipping e l'inserimento di campioni adversarial generati tramite algoritmi specifici — possa alterare il comportamento del classificatore, ponendo le basi per l'analisi sperimentale condotta nel Capitolo 5.
+
+\section{Addestramento di algoritmi di ML per la malware detection}
+In questa tesi vengono esaminate due architetture per la malware detection su file eseguibili Windows in formato Portable Executable (PE): il modello MalConv\cite{raff2017malwaredetectioneatingexe} e una Deep Neural Network (DNN) basata su feature vector\cite{connors2022machinelearningdetectingmalware}.
+
+Per valutare l'efficacia e la trasferibilità degli attacchi, sono state addestrate due architetture: MalConv e una DNN (denominata \(DNN_{original}\)), i cui modelli sono stati usati per generare gli esempi avversari per l'attacco di poisoning. Una seconda DNN (denominata \(DNN_{bersaglio}\)) è stata addestrata come modello bersaglio da attaccare. In particolare, i due modelli MalConv e \(DNN_{original}\) sono stati addestrati su uno stesso dataset \(\mathcal{D}\) di applicazioni Windows etichettate. La \(DNN_{bersaglio}\) è invece stata addestrata su un differente dataset, sempre contenente applicazioni Windows etichettate come malware o goodware. L'idea è di valutare la trasferibilità di esempi avversari creati su un modello di DL utilizzati per avvelenare un modello bersaglio addestrato su esempi diversi.
+
+MalConv è una Convolutional Neural Network (CNN), una classe di reti neurali profonde specializzate nell'elaborazione di dati con una struttura a griglia, come le immagini, ma efficaci anche su dati sequenziali. Progettata per classificare i file PE analizzando direttamente i byte contenuti nel file binario di applicazioni Windows PE, MalConv elimina la necessità di una fase esplicita di estrazione delle feature. Il modello elabora l'eseguibile come una sequenza di byte: questi vengono inizialmente mappati in uno spazio di embedding e successivamente processati attraverso strati convoluzionali monodimensionali e operazioni di pooling. Il risultato finale è una stima della probabilità che il campione analizzato appartenga alla classe malware.
+
+Parallelamente a MalConv, è stata impiegata una DNN che opera come classificatore basato su vettori di caratteristiche, estratte tramite LIEF, come descritto in \ref{LIEF_data}. A differenza di MalConv, questo modello non analizza i byte grezzi, bensì un insieme di feature estratte dalla struttura del file PE. L'architettura della DNN è costituita da una sequenza di strati completamente connessi (fully connected) con funzioni di attivazione non lineari, terminando con uno strato di output che fornisce la probabilità di classificazione che un esempio appartenga alla classe malware. Questa probabilità è data dal'applicazione di una funzione sigmoidea nell'ultimo layer.
+
+
+\section{Poisoning di algoritmi di machine learning per la malware detection}
+\label{Pnnnnn}
+In questa sezione viene descritta la metodologia adottata per la generazione degli esempi adversarial utilizzati nell'attacco di poisoning, e le tecniche applicate.
+Sia \(\mathcal{D}\) il dataset di riferimento, partizionato in un insieme di addestramento \(\mathcal{D}_{train}\) e un insieme di test \(\mathcal{D}_{test}\).
+I modelli di rilevamento, denotati rispettivamente come MalConv e \(DNN_{original}\), vengono inizialmente addestrati e valutati su un dataset di training denominato \(\mathcal{D}_{train}\) contenente applicazioni di file Windows PE etichettate come benigni o malware. Nel seguito, si utilizzerà la notazione \(M\) per indicare il generico modello di rilevamento in esame, dove \(M\) può corrispondere a \(M_{MalConv}\) oppure a \(M_{DNN_{original}}\).
+
+In figura~\ref{fig:fase0} è illustrata la fase di generazione degli esempi Adversarial, vengono considerati solamente i campioni \(x \in \mathcal{D}_{train}\) che sono stati classificati correttamente dal modello \(M\), ovvero i casi in cui la predizione \(\hat{y} = M(x)\) corrisponde all'etichetta reale \(y\).
+Tali campioni costituiscono l'input per gli algoritmi di generazione adversarial utilizzati: GAMMA e OLIVANDER.
+Nello specifico, l'algoritmo GAMMA è stato impiegato per attaccare sia MalConv che \(DNN_{original}\) (utilizzando per ciascuno i rispettivi campioni correttamente classificati), mentre l'algoritmo OLIVANDER è stato applicato esclusivamente al modello \(DNN_{original}\).
+
+Un aspetto distintivo di questo approccio risiede nella direzione dell'attacco. In questo lavoro di tesi, a differenza dell'obiettivo originale dei due algoritmi di creazione di esempi avversari utilizzati (GAMMA e OLIVANDER), in cui l'obiettivo è partire da dati correttamente etichettati come malware per creare esempi classificati come goodware, l'obiettivo prefissato è opposto: partire da esempi correttamente classificati come goodware per generare esempi adversarial che vengano classificati come malware (\(y_{good} \to y_{mal}\)).
+Ogni insieme di esempi adversarial generati, \(Adv_{Gamma\to MalConv},Adv_{Gamma\to DNN_{original}},Adv_{Olivander\to DNN_{original}}\), viene infine utilizzato come \textit{poison} per il dataset di addestramento del modello bersaglio, indicato come \(DNN_{bersaglio}\). 
+
+\begin{figure}[]
+    \centering
+    \includegraphics[width=\textwidth,height=0.8\textheight]{images/fase0.png}
+    \caption{Generazione degli esempi adversarial.}
+    \label{fig:fase0}
+\end{figure} 
+
+In particolare, gli algoritmi di poisoning testati in questa tesi prevedono l'applicazione di due tecniche usate in letteratura ovvero label flipping\textit{Label Flipping}\cite{zhao2025datapoisoningdeeplearning} e \textit{Clean Label}\cite{zhao2025datapoisoningdeeplearning}.
+Nella modalità \textit{Label Flipping}, gli esempi adversarial generati sono stati introdotti nel dataset assegnando loro l'etichetta Malware (\(y=1\)), forzando il modello ad apprendere associazioni errate tra le feature benigne perturbate e la classe malevola.
+Viceversa, nella modalità \textit{Clean Label}, gli esempi adversarial sono stati aggiunti etichettati come Goodware (\(y=0\)), rendendo l'attacco più furtivo in quanto le etichette rimangono coerenti con la natura originale del campione, sebbene il contenuto sia stato alterato.
+
+Infine, è stata condotta un'analisi comparativa sull'efficacia di due strategie di iniezione: l'aggiunta (\textit{injection}) e la sostituzione (\textit{replacement}).
+Nel primo caso, l'insieme degli esempi adversarial \(\mathcal{D}_{adv}\) viene semplicemente aggiunto al dataset originale, ottenendo un nuovo training set \(\mathcal{D}_{poisoned} = \mathcal{D}_{train} \cup \mathcal{D}_{adv}\).
+Nel secondo caso, si procede rimpiazzando i campioni originali \(x \in \mathcal{D}_{train}\) con le rispettive varianti adversarial \(x_{adv}\), tale che \(|\mathcal{D}_{poisoned}| = |\mathcal{D}_{train}|\). Questa distinzione permette di valutare se la semplice presenza di campioni avvelenati sia sufficiente o se la rimozione delle informazioni originali amplifichi l'efficacia dell'attacco. Questa seconda fase di manipolazione del dataset è riassunta in Figura~\ref{fig:fase1}.
+
+\begin{figure}[]
+    \centering
+    \includegraphics[width=\textwidth,height=0.8\textheight]{images/fase1.png}
+    \caption{Applicazione del poisoning al dataset.}
+    \label{fig:fase1}
+\end{figure}
+
+In conclusione, è fondamentale sottolineare che gli esempi adversarial generati sfruttando i modelli (\(MalConv\) e \(DNN_{original}\)) costituiscono il payload per l'attacco di poisoning rivolto al modello bersaglio (\(DNN_{bersaglio}\)). L'efficacia di tale attacco si basa sulla proprietà di trasferibilità: si assume che le perturbazioni efficaci contro i modelli surrogati mantengano la loro validità anche quando utilizzate per inquinare il training set di un'architettura distinta, compromettendone le prestazioni finali.
+

@@ -1,0 +1,30 @@
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex(busy)
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.xdv
+
+# minted cache
+_minted*
+
+# latexmk output directory
+build/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/ipch

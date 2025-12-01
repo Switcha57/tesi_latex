@@ -1,0 +1,236 @@
+\chapter{Stato dell'arte}
+\label{cap:stato-arte}
+
+Dopo aver introdotto nel capitolo precedente le basi tecniche relative al formato dei file PE e agli attacchi black-box che ne preservano la funzionalità, questo capitolo si addentra nello stato dell'arte dell'adversarial machine learning (descritto in\ref{cap2:adm}). L'obiettivo è fornire una panoramica delle dinamiche offensive e difensive che caratterizzano questo campo, creando il contesto necessario per comprendere gli esperimenti di poisoning che verranno discussi successivamente.
+
+Verranno analizzate alcune tecniche di attacco adversarial, principalmente verso modelli di ML basati sull'apprendimento supervisionato, esplorando approcci basati sul gradiente come FGSM e PGD, metodi fondati sull'ottimizzazione vincolata e strategie euristiche. Successivamente, verranno analizzate le contromisure , come l'adversarial training e la rilevazione di anomalie, per rendere i modelli più robusti. Infine, dedicheremo un'ampia sezione al poisoning, discutendo tecniche come il label flipping, i clean-label attack e gli attacchi backdoor.
+
+\section{Machine Learning per la malware detection}
+L'evoluzione degli strumenti di rilevamento malware ha visto l'introduzione del Machine Learning (ML) già a partire dal 2001, con l'utilizzo di classificatori basati su regole e algoritmi Naive Bayes~\cite{924286}. Nel corso del tempo, l'applicazione del ML in questo ambito si è estesa, arrivando a coinvolgere una vasta gamma di algoritmi per lo sviluppo di sistemi di rilevamento sempre più avanzati~\cite{connors2022machinelearningdetectingmalware}.
+
+Storicamente, le soluzioni antivirus tradizionali si sono basate principalmente su due approcci: il rilevamento tramite firme e quello euristico. Il primo metodo si fonda sull'identificazione univoca di un malware attraverso firme uniche (algoritmi o hash), mentre il secondo utilizza un insieme di regole definite da esperti sulla base dell'analisi comportamentale dei software malevoli. Sebbene efficaci in determinati contesti, questi approcci presentano limitazioni significative: richiedono un'analisi a priori del malware per la definizione delle regole e, nel caso dei metodi basati su firme, si rivelano inefficaci contro varianti sconosciute o di nuova generazione.
+
+Per superare queste criticità, la ricerca si è orientata verso tecniche di rilevamento comportamentale, che esaminano le caratteristiche e le azioni eseguite dai file per identificarne la natura malevola. In questo scenario, il Machine Learning ha assunto un ruolo cruciale, offrendo la capacità di elaborare grandi moli di dati e permettendo ai sistemi di sicurezza di adattarsi rapidamente alle nuove minacce, colmando così le lacune dei motori antivirus tradizionali.
+
+Gli approcci di Machine Learning tradizionali per la rilevazione di malware si basano su una tassonomia di feature estratte dai file eseguibili, classificate in due categorie principali: statiche e dinamiche, come illustrato in Figura~\ref{fig:featureMLtassonomia}. Questa distinzione è fondamentale in quanto riflette le due metodologie di analisi del malware. Le feature statiche sono ricavate dall'esame del codice o della struttura dell'eseguibile senza avviarlo, tipicamente analizzando il contenuto binario o il codice assembly. Esempi di queste includono l'analisi delle stringhe stampabili\cite{chen2025rethinkingexploringstringbasedmalware}, gli N-grammi di byte o di opcode\cite{electronics9111777}, le chiamate a funzioni API importate\cite{fellicious2025malwaredetectionbasedapi}, l'entropia (utile per rilevare codice compresso o crittografato) e le strutture di controllo del programma come i Grafi di Chiamata a Funzioni (FCG) e i Grafi di Controllo del Flusso (CFG)\cite{fellicious2025malwaredetectionbasedapi}. Al contrario, le feature dinamiche vengono estratte durante l'esecuzione del malware in un ambiente controllato (sandbox o macchina virtuale), permettendo di osservare il suo comportamento reale. Questa categoria include il monitoraggio dell'utilizzo di memoria e registri, le tracce di istruzioni eseguite, il traffico di rete generato\cite{Boukhtouta2015NetworkMC} e, in modo cruciale, le tracce di chiamate API a runtime\cite{MANIRIHO2023103704}.
+Nel caso del deep learning oltre ad una 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/1-s2.0-S1084804519303868-gr3_lrg.jpg}
+    \caption{Tassonomia delle feature comunemente usate nei approcci ML, immagine fornita da\cite{GIBERT2020102526}}
+    \label{fig:featureMLtassonomia}
+\end{figure}
+
+Negli ultimi anni, l'attenzione della ricerca si è spostata verso l'utilizzo del Deep Learning (DL), come evidenziato da Gibert et al.~\cite{GIBERT2020102526}, gli approcci di Deep Learning sono in grado di apprendere rappresentazioni gerarchiche dei dati direttamente dai file grezzi, automatizzando il processo di estrazione delle caratteristiche.
+
+Un aspetto cruciale nell'applicazione del Deep Learning alla malware detection è la modalità con cui il file eseguibile viene rappresentato e fornito in input alla rete neurale. Una rappresentazione ampiamente utilizzata, che funge da ponte tra il machine learning tradizionale e il deep learning, è quella basata su feature vector. In questo caso, il file viene analizzato per estrarre un insieme fisso di caratteristiche che vengono concatenate in un unico vettore di input per la rete neurale. Un lavoro fondamentale in questa direzione è quello di Saxe e Berlin~\cite{saxe2015deepneuralnetworkbased}, che hanno proposto una rete neurale profonda addestrata su vettori di feature binari estratti staticamente, lavori piu recenti\cite{olivander,9437194,connors2022machinelearningdetectingmalware} usano LIEF, come descritto in~\ref{LIEF_data}, per automatizzare l'estrazione.
+
+
+Un'altra metodologia efficace trae ispirazione dal campo NLP. In questo caso, il codice del malware, sia esso sotto forma di sequenza di byte o di istruzioni assembly (opcode), viene trattato come un testo. Tecniche come l'embedding vengono utilizzate per convertire queste sequenze in vettori numerici, che vengono poi analizzati da architetture ricorrenti come le Recurrent Neural Networks (RNN) o le Long Short-Term Memory (LSTM), capaci di catturare le dipendenze sequenziali e temporali all'interno del codice. Pascanu et al.~\cite{pascanu2015malware}, ad esempio, hanno utilizzato reti ricorrenti per modellare la sequenza temporale delle chiamate API, ottenendo risultati promettenti nella classificazione.
+
+Approcci più strutturati rappresentano il malware attraverso grafi, come i CFG o i FCG. Queste rappresentazioni preservano la logica di esecuzione del programma e vengono elaborate tramite Graph Neural Networks (GNN), che eccellono nel rilevare relazioni complesse tra le diverse parti del codice, offrendo una robustezza superiore contro le tecniche di offuscamento che alterano la struttura lineare del file ma non la sua logica di fondo. Hassen e Chan~\cite{hassen2017scalable} hanno sfruttato questa rappresentazione basata su grafi di chiamate a funzioni per ottenere una classificazione scalabile ed efficace.
+
+\section{Adversarial Learning}
+\label{sec:adv_learning_letteratura}
+La ricerca nel campo degli attacchi adversarial ha esplorato numerose strategie per compromettere l'integrità dei modelli di machine learning. Da quando Szegedy et al. \cite{szegedy2013intriguing} hanno dimostrato la vulnerabilità delle reti neurali, questo ambito è diventato un punto focale della ricerca, con un continuo sviluppo di nuove tecniche di attacco e di difesa \cite{app9050909}.
+
+\subsection{adversarial learning: attacchi ai modelli}
+ I primi studi pionieristici si sono concentrati prevalentemente sul dominio delle immagini, dove sono state sviluppate tecniche per generare esempi avversari manipolando in modo mirato i dati di input \cite{szegedy2013intriguing}. Tra queste, le metodologie basate sulla discesa del gradiente si sono dimostrate particolarmente efficaci, aprendo la strada a un'intera famiglia di attacchi.
+
+Le tecniche di attacco adversarial possono essere classificate in base alla conoscenza del modello bersaglio e al metodo di generazione della perturbazione. In questa sezione verranno esaminate le principali tipologie: gli attacchi basati sul gradiente e l'ottimizzazione vincolata, che sfruttano la conoscenza dei pesi del modello; gli attacchi gradient-free (o euristici), utilizzabili in scenari black-box; e infine gli attacchi di patch adversarial, progettati per l'applicazione nel mondo fisico.
+
+\paragraph{Attacchi basati sul gradiente e ottimizzazione vincolata}
+Gli attacchi basati sul gradiente sono un tipo comune di attacco utilizzato contro i modelli di rete neurale. Questi metodi di attacco funzionano manipolando i dati di input in base al gradiente della funzione di perdita rispetto all'input, per causare un aumento della funzione di perdita del modello, portando di conseguenza il modello a commettere errori nelle sue previsioni.\cite{goodfellow2015explainingharnessingadversarialexamples}
+Tra i metodi classici di attacco basati sul gradiente troviamo:
+\begin{itemize}
+    \item \textbf{Fast Gradient Sign Method (FGSM)}: Introdotto da Goodfellow et al.~\cite{goodfellow2015explainingharnessingadversarialexamples}, questo è uno dei primi e più semplici attacchi. FGSM esegue un singolo passo di aggiornamento sull'input nella direzione del segno del gradiente della funzione di perdita. La sua semplicità e velocità lo rendono un punto di partenza comune per attacchi più complessi.
+    \item \textbf{Basic Iterative Method (BIM)}: Proposto da Kurakin et al.~\cite{kurakin2017adversarial}, BIM è un'estensione iterativa di FGSM. Invece di un singolo passo, applica FGSM più volte con una dimensione del passo più piccola, proiettando il risultato a ogni passo per garantire che rimanga entro un intorno dell'input originale. Questo approccio iterativo genera esempi avversari più efficaci rispetto a FGSM.
+    \item \textbf{Projected Gradient Descent (PGD)}: Presentato da Madry et al.~\cite{madry2018towards}, PGD è considerato uno degli attacchi del primo ordine più potenti. Simile a BIM, è un metodo iterativo, ma inizia con una perturbazione casuale all'interno della norma consentita e poi esegue diversi passi di discesa del gradiente proiettata. La sua robustezza lo ha reso un benchmark standard per valutare le difese avversarie.
+\end{itemize}
+
+Sebbene metodi come il PGD risolvano un problema di ottimizzazione vincolata massimizzando l'errore entro un budget fissato, un'altra classe di attacchi inverte questa logica cercando la minima perturbazione necessaria per causare una misclassificazione. Questo approccio è spesso formulato come:
+\begin{equation}
+\min_{\mathbf{x}^{adv}} \|\mathbf{x}^{adv} - \mathbf{x}\|_p \quad \text{s.t. } f(\mathbf{x}^{adv}) = y_t
+\end{equation}
+dove $y_t$ è la classe target desiderata.
+
+Un esempio di questo approccio è l'attacco \textbf{Carlini \& Wagner (C\&W)}\cite{carlini2017towards}. Questo metodo utilizza obiettivi multipli che minimizzano contemporaneamente la perdita sulla classe target e la distanza tra l'esempio avversario e il campione originale. L'attacco viene ottimizzato tramite il metodo della penalità~\cite{nist_ai100_2_2025} e considera tre metriche di distanza per misurare le perturbazioni: $l_0$, $l_2$ e $l_\infty$.
+
+
+La Tabella~\ref{tab:merged_attacks}, adattata da Wang et al.~\cite{wang2023adversarialattacksdefensesmachine}, offre una panoramica dei più recenti attacchi basati sulla discesa del gradiente e sull'ottimizzazione vincolata, affiancando agli algoritmi classici nuove metodologie specializzate per diversi domini.
+
+Tra queste, il \textbf{Simplified Gradient-based Attack (SGA)}~\cite{li2021adversarialattacklargescale} affronta le sfide di scalabilità nei grafi di grandi dimensioni. Anziché operare sull'intera struttura, SGA costruisce un sottografo centrato sul nodo target e applica l'ottimizzazione solo su questa porzione ridotta, rendendo praticabile l'uso di tecniche basate sul gradiente anche su reti molto estese.
+
+Spostando l'attenzione dalle strutture a grafo alle proprietà semantiche delle Deep Neural Networks (DNN), l'\textbf{Attention-based Adversarial Attack (AoA)}~\cite{9238430} propone un cambio di paradigma. A differenza degli attacchi tradizionali che mirano direttamente all'output, AoA agisce modificando la mappa di attenzione di un modello surrogato white-box. Questo approccio genera esempi avversari con elevata trasferibilità, risultando efficace anche in contesti black-box con un numero ridotto di query.
+
+Infine, nel dominio delle immagini, il metodo \textbf{SSAH (Semantic Similarity Attack on High-frequency components)}~\cite{luo2022frequencydrivenimperceptibleadversarialattack} evolve l'approccio di C\&W introducendo vincoli nel dominio della frequenza. SSAH scompone l'immagine tramite la Discrete Wavelet Transform (DWT) e nasconde il rumore avversario nelle componenti ad alta frequenza, dove i pixel cambiano rapidamente. Questo permette di ingannare la rete neurale mantenendo l'immagine apparentemente identica per un osservatore umano, poiché le modifiche sono camuffate nei dettagli complessi e nei bordi.
+
+\begin{table}[p]   
+\centering
+\caption{Metodi di attacco adversarial basati sul gradiente e ottimizzazione vincolata.~\cite{wang2023adversarialattacksdefensesmachine}}
+\label{tab:merged_attacks}
+\resizebox{\textwidth}{!}{%
+\begin{minipage}{30cm} % Wrap in minipage to display footnotes correctly
+\renewcommand{\thempfootnote}{\arabic{mpfootnote}} % Use numbers for footnotes
+\begin{tabular}{@{}l p{4.5cm} l l p{5cm} p{5cm}@{}}
+\toprule
+\textbf{Attacco} & \textbf{Descrizione e Input} & \textbf{Tipo} & \textbf{Metrica} & \textbf{Vantaggio} & \textbf{Svantaggio} \\
+\midrule
+FGSM\cite{goodfellow2015explainingharnessingadversarialexamples} & 
+\textbf{Input:} Continuo \newline 
+Attacco one-step basato sul segno del gradiente. & 
+White-box & 
+\(l_{\infty}\) & 
+Veloce e semplice da implementare. & 
+Meno efficace di metodi iterativi; facile da difendere. \\
+\midrule
+
+BIM\cite{kurakin2017adversarial} & 
+\textbf{Input:} Continuo \newline 
+Versione iterativa di FGSM con proiezione. & 
+White-box & 
+\(l_{\infty}\) & 
+Più efficace di FGSM. & 
+Più lento di FGSM. \\
+\midrule
+
+PGD\cite{madry2018towards} & 
+\textbf{Input:} Continuo \newline 
+Metodo iterativo con inizializzazione casuale e proiezione. & 
+White-box & 
+\(l_{\infty}\) & 
+Attacco del primo ordine molto potente e robusto. & 
+Costoso computazionalmente. \\
+\midrule
+
+C\&W\cite{carlini2017towards} & 
+\textbf{Input:} Continuo \newline 
+Attacco basato su ottimizzazione che minimizza la norma della perturbazione. & 
+White-box & 
+\(l_{2}\) & 
+Molto efficace contro difese come la distillation; trova perturbazioni minime. & 
+Computazionalmente costoso rispetto a FGSM/PGD. \\
+\midrule
+
+SGA\cite{li2021adversarialattacklargescale}  & 
+\textbf{Input:} Discreto \newline 
+Framework che riduce la scala del grafo a un sottografo più piccolo centrato sul nodo target, per attaccare grafi di grandi dimensioni. & 
+Black-box & 
+DAC\footnote{
+Degree Assortativity Change, metrica che valuta la tendenza di nodi appartenenti alla stessa classe di raggrupparsi dei nodi prima e dopo l'attacco. Un valore basso di DAC implica che le modifiche apportate preservano la tendenza dei nodi a connettersi in modo simile all'originale, rendendo l'attacco più difficile da rilevare.
+} & 
+Migliora l'efficienza in tempo e memoria con una notevole forza d'attacco; forte trasferibilità tra diverse GNN. & 
+Non disponibile per attacchi di iniezione di nodi a causa del costo computazionale del DAC; usato per classificazione di nodi o attacchi mirati. \\
+\midrule
+
+AoA\cite{9238430} & 
+\textbf{Input:} Continuo \newline 
+Basato sulle proprietà semantiche condivise dalle DNN. Modifica la mappa di attenzione e la funzione di perdita invece dell'output. & 
+White-box, Black-box & 
+RMSE & 
+Supera molte DNN con zero query. Trasferibilità aumentata usando la cross-entropy loss. Facile da combinare con altre tecniche. & 
+Anche se gli esempi generati sono distinti, possono essere catturati dall'AT. \\
+\midrule
+
+SSAH\cite{luo2022frequencydrivenimperceptibleadversarialattack} & Attacca la similarità semantica delle immagini; applica una serie di trasformazioni focalizzate sulle componenti ad alta frequenza. & White-box & FID\footnote{Quantifica le variazioni medie della struttura informativa di base tra l'originale e l'esempio adversarial.} & Più trasferibile tra diverse architetture e dataset; altamente impercettibile. & Nessun aumento significativo dell'aggressività. \\
+\bottomrule
+\end{tabular}%
+\end{minipage}
+}
+\end{table}
+
+\paragraph{Gradient-Free (Heuristic) Attacks}
+Sebbene gli attacchi basati sul gradiente siano estremamente efficaci, la loro applicabilità è spesso limitata a scenari white-box in cui l'attaccante ha accesso completo ai parametri del modello. In contesti più realistici, dove tali informazioni non sono disponibili, emergono gli attacchi gradient-free.
+Questi metodi, detti anche euristici o basati su query, non richiedono il calcolo esplicito del gradiente del modello target e sono quindi adatti a scenari black-box o decision-based. Le strategie adottate sono diverse: alcuni stimano i gradienti attraverso tecniche di ottimizzazione a partire da valutazioni delle probabilità o della sola etichetta di output (ad esempio tramite stime zeroth-order o finite-difference)~\cite{bhagoji2017exploring,chen2017zoo}; altri sfruttano approcci decision-based per stimare la direzione di modifica cercando il confine decisionale (es. HopSkipJump)~\cite{chen2019hopskipjump}; infine, esistono algoritmi basati su ricerche euristiche ed algoritmi genetici che cercano soluzioni efficaci esplorando lo spazio di input senza stime dirette del gradiente~\cite{deap,9437194}.
+
+Questi metodi presentano vantaggi e svantaggi chiari: da un lato permettono di attaccare modelli reali anche quando non sono disponibili informazioni interne (architettura o pesi), e in molti casi possono essere combinati con tecniche di trasferibilità per ridurre il numero di query~\cite{wang2023adversarialattacksdefensesmachine}; dall'altro richiedono spesso un numero elevato di query, rendendo critico il trade-off tra budget di query e qualità della perturbazione. GAMMA e Olivander rientrano in questa tipologia.
+
+\paragraph{Attacchi di patch adversarial}
+Infine oltre agli attacchi su dati usati come input a modelli di ML un'ulteriore liena di ricerca rigaurda gli attacchi avversari il cui scopo è essere usati nel mondo fisico. Questa ricerca denominata attacchi di tipo patch
+Gli attacchi di patch adversarial emergono come una variante degli attacchi basati su esempi adversarial, con lo scopo di essere usati nel mondo fisico~\cite{cheng2022physicalattackmonoculardepth}. Contrariamente agli attacchi in cui l'attaccante mira a minimizzare la perturbazione per evitarne il rilevamento, negli attacchi di patch adversarial l'attaccante non si limita più a modifiche impercettibili~\cite{duan2021adversariallaserbeameffective}. L'attacco genera una patch indipendente dall'immagine, che può essere posizionata in qualsiasi punto dell'immagine per attaccare un classificatore di immagini basato su ML e indurlo a restituire una classe target specificata. La perturbazione si può tradurre nel mondo reale come applicazione di uno sticker~(sticker-pasting attack)~\cite{eykholt2018robustphysicalworldattacksdeep}, proiettando la perturbazione~\cite{nguyen2020adversariallightprojectionattacks} o tramite laser~\cite{duan2021adversariallaserbeameffective}.
+
+\paragraph{Trasferibilità degli attacchi adversarial}
+Un aspetto cruciale che amplifica la pericolosità di tutte le strategie offensive analizzate, sia gradient-based che gradient-free, è il fenomeno della trasferibilità.
+La trasferibilità si riferisce alla capacità degli attacchi adversarial di essere efficaci su modelli e dataset diversi da quelli usati per generarli~\cite{236234}. Idealmente, dal punto di vista dell'attaccante, un esempio avversario creato per ingannare un modello specifico può ingannare anche altri modelli. Questo è rilevante perché significa che l'attaccante non deve generare un nuovo esempio avversario per ogni modello o dataset da attaccare, operazione che può essere dispendiosa in termini di tempo e risorse computazionali.
+La proprietà di trasferibilità di un attacco si verifica quando un attacco sviluppato per un particolare modello di machine learning (cioè un modello surrogato) è efficace anche contro il modello target~\cite{236234}.
+
+Nello scenario dei evasion attacks, la diminuzione della complessità del modello surrogato — ottenibile tramite una taratura opportuna degli iperparametri dell'algoritmo di apprendimento — tende a generare esempi avversari con maggiore trasferibilità verso una gamma più ampia di modelli. Viceversa, per gli attacchi di poisoning, i surrogate più efficaci risultano essere modelli con livelli di regolarizzazione simili a quelli del modello target: la funzione obiettivo del poisoning risulta infatti relativamente stabile (bassa varianza) per la maggior parte dei classificatori e, di conseguenza, l'allineamento dei gradienti fra surrogate e target diventa un fattore determinante nella trasferibilità degli attacchi~\cite{236234}.
+
+% Alcuni lavori nel come\cite{luo2022frequencydrivenimperceptibleadversarialattack} hanno mostrato come ad esempio attacchi creati con.......... sono in grado di evadere anche modelli
+Alcuni lavori hanno valutato la trasferibilità in base alla diminuzione\footnote{una bassa diminuzione vuol dire che l'attacco ha alta trasferibilità} della percentuale di successo dell'attacco (ASR, attack success rate),considerando modelli con la stessa architettura ma dataset di training diversi\cite{236234,papernot2017practicalblackboxattacksmachine,geirhos2022imagenettrainedcnnsbiasedtexture}, altri stesso dataset di training ma architettura diversa\cite{szegedy2013intriguing,dong2018boostingadversarialattacksmomentum} ed infine scenari black-box\cite{luo2022frequencydrivenimperceptibleadversarialattack}
+\subsection{Adversarial learning: difese}
+
+È importante notare che molte difese che sembrano efficaci possono essere aggirate mediante attacchi progettati tenendo conto della difesa stessa. Per questo motivo la valutazione delle contromisure deve avvenire tramite benchmark rigorosi e attacchi di riferimento (es. PGD) che testino scenari white-box, gray-box e black-box. Inoltre, esiste un trade-off costante tra robustezza\footnote{Per robustezza del modello si intende la proprietà per cui le prestazioni del modello, misurate mediante metriche appropriate, risultano invariate o degradano entro limiti specificati in presenza di variazioni o perturbazioni dell'input} e accuratezza, nonché tra efficacia della difesa e costi computazionali, che condiziona la scelta della strategia di difesa più adeguata in applicazioni concrete.
+
+Le principali strategie di difesa si possono suddividere in due macrocategorie: la rilevazione di attacchi adversarial e le tecniche per rendere i modelli più robusti. La rilevazione mira a identificare e scartare gli input malevoli prima che vengano elaborati dal modello, agendo come un filtro di sicurezza. Al contrario, le tecniche di robustezza intervengono direttamente sul modello, modificandone il processo di addestramento o l'architettura per renderlo intrinsecamente resistente alle perturbazioni. Di seguito vengono analizzate nel dettaglio queste due strategie.
+
+\paragraph{Rilevazione di attacchi adversarial}
+La rilevazione degli input adversarial rappresenta una categoria di difesa diversa dalla robustezza del modello: anziché rendere il modello immune alle perturbazioni, si cerca di individuare gli input sospetti e bloccarli o reindirizzarli a una pipeline di verifica. In ambito visivo, le tecniche di rilevazione si dividono grossomodo in quattro famiglie\cite{chattopadhyay2025surveyadversarialdefensesvisionbased}:
+\begin{itemize}
+    \item preprocessori e trasformazioni che evidenziano o attenuano le perturbazioni (es. Feature Squeezing)~\cite{xu2017feature};
+    \item misure statistiche sulle rappresentazioni interne, come la Local Intrinsic Dimensionality (LID), per discriminare le regioni di spazio in cui variano le distribuzioni di feature tra esempi naturali e adversarial~\cite{ma2018characterizinglid};
+    \item modelli detector che classificano direttamente input sospetti partendo da attivazioni di layer intermedi o usando reti addizionali addestrate a riconoscere le firme delle perturbazioni~\cite{metzen2017detecting};
+    \item metodi basati su stima della densità o della incertezza del modello, ovvero tecniche che segnalano anomalie nella stima di confidenza del classificatore rispetto a istanze non naturali~\cite{feinman2017detecting}.
+\end{itemize}
+
+Questi approcci possono essere combinati (ad esempio un detector seguito da un processo di ricostruzione come in MagNet~\cite{meng2017magnet}) ma ciascuno presenta limitazioni pratiche: alcuni sono sensibili a trasformazioni non adversarial (falsi positivi), altri hanno costi computazionali non trascurabili e molti possono essere aggirati da attacchi adattativi studiati per eludere la difesa\cite{carlini2017bypassing}.
+
+Per domini non visuali (ad esempio grafi, dati tabulari) la letteratura propone contromisure ad hoc: per reti a grafo la rilevazione si concentra su metriche topologiche o sulla coerenza degli embedding (es.\ analisi delle alterazioni strutturali indotte da attacchi come Nettack)~\cite{zugner2018adversarial}; per dati tabulari e transazionali si impiegano tecniche di anomaly detection, modelli di ensemble e misure statistiche che confrontano la distribuzione osservata con quella attesa~\cite{PITROPAKIS2019100199}. È importante valutare i detector non solo per la loro efficacia di rilevazione ma anche per la robustezza contro attacchi adattativi e per il loro impatto operativo (latenza, throughput, falsi positivi/negativi)~\cite{wang2023adversarialattacksdefensesmachine}.
+
+% duplicate paragraph removed: detection methods for non-image domains were described above
+
+Tutte queste tecniche presentano limiti pratici: tassi di falsi positivi/negativi e vulnerabilità a attacchi progettati per eludere il detector.~\cite{wang2023adversarialattacksdefensesmachine}.
+
+\paragraph{Rendere robusto il modello}
+Se da un lato la rilevazione cerca di identificare e scartare gli input malevoli, un approccio complementare e spesso più solido consiste nel progettare modelli intrinsecamente resistenti alle perturbazioni.
+La strategia più consolidata in questa direzione è l'\textbf{Adversarial Training}, che modifica il processo di apprendimento includendo esempi avversari (generati tipicamente tramite PGD) nel training set. Questo approccio viene formalizzato come un problema di ottimizzazione min-max, in cui il modello impara a minimizzare la funzione di perdita anche nel caso peggiore~\cite{madry2018towards}. Sebbene l'adversarial training offra una robustezza empirica significativa e costituisca la base per molte difese certificate, comporta un elevato costo computazionale e può talvolta degradare l'accuratezza sui dati puliti.
+Parallelamente, tecniche come la \textbf{Distillation Difensiva} cercano di rendere il modello meno sensibile a piccole variazioni dell'input. Addestrando un modello ``student'' sulle soft label prodotte da un ``teacher'', si ottiene una superficie decisionale più liscia (gradient masking), che ostacola il calcolo dei gradienti necessari per generare gli attacchi~\cite{papernot2015distillation}. Tuttavia, è stato dimostrato che questa protezione può essere aggirata da attacchi che non dipendono direttamente dai gradienti locali o che li approssimano diversamente~\cite{carlini2017bypassing}.
+Infine, la ricerca attuale esplora \textbf{architetture e approcci ibridi} che combinano ensemble di modelli, layer di denoising e meccanismi di normalizzazione robusti. Queste soluzioni mirano a superare i limiti delle singole tecniche, ad esempio unendo adversarial training e preprocessing, per trovare un miglior compromesso tra robustezza e prestazioni operative, sebbene la loro efficacia richieda sempre una validazione rigorosa contro attacchi adattativi~\cite{tramer2018ensembleclean}.
+
+
+\section{Poisoning dei dati in letteratura}
+
+
+Il panorama degli attacchi di \textit{Data Poisoning} è vasto e si articola in base alla conoscenza del sistema da parte dell'attaccante, agli obiettivi prefissati e al dominio applicativo. Sebbene il focus principale di questa trattazione sia l'apprendimento supervisionato, è doveroso notare come il poisoning minacci anche altri paradigmi: nei Large Language Models (LLM) si osservano attacchi durante il pre-training o l'instruction tuning~\cite{zhao2025datapoisoningdeeplearning}; nel clustering (apprendimento non supervisionato) framework come Sonic attaccano algoritmi incrementali~\cite{villani2024sonicfasttransferabledata}; infine, nei sistemi di raccomandazione, si utilizzano GAN per generare profili utente falsi~\cite{CHEN2024121630}.
+
+\subsection{Tassonomia e Obiettivi}
+La letteratura classifica gli attacchi di avvelenamento principalmente in base all'obiettivo e alla modalità di manipolazione~\cite{zhao2025datapoisoningdeeplearning, wang2024poisoningattacksdefensesrecommender}.
+Per quanto riguarda gli obiettivi, è possibile distinguere tre categorie principali.
+La prima è rappresentata dagli \textit{Availability Attack} (attacchi alla disponibilità), in cui l'intento è massimizzare l'errore di classificazione generale del modello, degradandone le prestazioni complessive su tutto il dataset di test e rendendolo di fatto inutilizzabile~\cite{wang2024poisoningattacksdefensesrecommender, zhao2025datapoisoningdeeplearning}.
+Al contrario, nei \textit{Targeted Attack} (attacchi mirati), l'attaccante mira a indurre la classificazione errata solo su un numero limitato di campioni specifici, mantenendo inalterate le prestazioni sul resto del dataset; questa strategia è spesso scelta per garantire una maggiore furtività (\textit{stealthiness})~\cite{zhao2025datapoisoningdeeplearning}.
+Infine, una categoria distinta è quella dei \textit{Backdoor Attack}, in cui l'attaccante inserisce un pattern nascosto, detto \textit{trigger}, nei dati di addestramento. In questo scenario, il modello infetto continua a comportarsi normalmente sui dati puliti, ma attiva un comportamento malevolo predefinito non appena rileva la presenza del trigger nell'input~\cite{zhao2025datapoisoningdeeplearning}.
+
+% \subsubsection{Formalizzazione tramite Ottimizzazione a Due Livelli (Bilevel Optimization)}
+% Dal punto di vista matematico, molti attacchi di poisoning, specialmente nel contesto "white-box", possono essere formulati come un problema di ottimizzazione a due livelli (\textit{bilevel optimization}) \cite{wang2024poisoningattacksdefensesrecommender, zhao2025datapoisoningdeeplearning}.
+% L'attaccante cerca di trovare un dataset avvelenato $D_p$ che massimizzi una funzione di perdita $\mathcal{L}_{atk}$ sul set di validazione $D_{val}$ (o su specifici target), sapendo che i parametri del modello $\theta^*$ saranno ottenuti minimizzando la funzione di perdita di addestramento $\mathcal{L}_{train}$ sul dataset unito $D_{train} \cup D_p$.
+
+
+
+\subsection{Tecniche di Poisoning}
+\label{poisonTAX}
+Oltre alla distinzione basata sugli obiettivi, è fondamentale analizzare le tecniche specifiche utilizzate per generare i dati avvelenati.
+
+La tecnica più semplice di poisoning è il \textit{Label Flipping}, che consiste nel modificare l'etichetta di un sottoinsieme di dati di addestramento senza alterarne le caratteristiche (features). Ad esempio, in un classificatore binario per malware, un attaccante potrebbe etichettare file benigni come malevoli o viceversa. 
+Questi attacco è stato studiato in vari domini tra cui classificazione del testo (NLP)\cite{gutierrez-megias-etal-2024-smart},LLM\cite{kusaka2025costminimizedlabelflippingpoisoningattack} e cybersecurity\cite{aryal2023analysislabelflippoisoningattack}
+Per attacchi più sofisticati, specialmente contro modelli come SVM e Reti Neurali, si utilizzano invece approcci basati sul gradiente (\textit{Gradient-based Poisoning}). Biggio et al. \cite{biggio2012poisoning} hanno proposto un metodo per calcolare il gradiente della funzione di perdita di validazione rispetto ai punti di addestramento. L'attaccante modifica iterativamente i punti di addestramento nella direzione che massimizza l'errore di classificazione sul set di validazione. Questo approccio permette di generare attacchi ottimali con un numero ridotto di punti avvelenati, rendendo l'attacco più difficile da rilevare rispetto al semplice label flipping.
+
+Un'altra modalità di attacco è rappresentata dai \textit{Backdoor Attacks}. Nello specifico, l'attaccante inietta nel dataset campioni che contengono uno specifico pattern (trigger), come un pixel di un certo colore in un'immagine o una stringa specifica in un file, associandoli a una classe target errata. Il modello apprende ad associare la presenza del trigger alla classe target. Durante l'inferenza, qualsiasi input contenente il trigger verrà classificato erroneamente come desiderato dall'attaccante, mentre gli input senza trigger verranno classificati correttamente. BadNets \cite{gu2017badnets} è stato uno dei primi lavori a dimostrare l'efficacia di questi attacchi nelle reti neurali profonde.
+
+Ancora più insidiosi sono i \textit{Clean-Label Attacks}, una forma di Data Poisoning in cui i campioni avvelenati inseriti nel training set mantengono un'etichetta coerente con il loro contenuto (``clean labels''), ma sono manipolati per indurre errori su specifici target. A differenza del label flipping, qui l'etichetta non viene alterata, rendendo l'attacco estremamente difficile da individuare tramite ispezione umana o controlli di qualità standard~\cite{zhao2025datapoisoningdeeplearning}.
+
+\label{subsec:feature_collision}
+
+Tra gli attacchi clean-label mirati, un esempio significativo è il \textit{Feature Collision Attack}, progettato per manipolare la rappresentazione interna del modello~\cite{cleanLaberPoisoning}.
+
+
+L'obiettivo dell'attaccante è far sì che il modello vittima classifichi erroneamente una specifica istanza target $x_t$ (appartenente alla classe $y_t$) come appartenente a una classe diversa $y_b$ (classe base).
+Per fare ciò, l'attaccante seleziona un'istanza base $x_b$ dalla classe $y_b$ e la perturba in modo impercettibile per creare un campione avvelenato $x_p$.
+
+Il meccanismo fondamentale si basa sulla collisione nello spazio delle feature (\textit{feature space collision}). Le reti neurali profonde estraggono caratteristiche di alto livello dagli input attraverso una funzione non lineare $\phi(\cdot)$, tipicamente rappresentata dagli strati convoluzionali che precedono il classificatore finale (layer denso o lineare). L'attacco mira a trovare un $x_p$ tale che:
+\begin{enumerate}
+    \item Nello spazio degli input , $x_p$ sia molto vicino a $x_b$, garantendo che l'etichetta $y_b$ appaia corretta a un detector.
+    \item Nello spazio delle feature, la rappresentazione \(\phi(x_p)\) sia estremamente vicina alla rappresentazione del target $\phi(x_t)$.
+\end{enumerate}
+
+Quando il modello viene addestrato sul dataset contenente $(x_p, y_b)$, esso apprende ad associare il vettore delle caratteristiche $\phi(x_p)$ all'etichetta $y_b$. Poiché $\phi(x_p) \approx \phi(x_t)$, il modello generalizzerà questa associazione anche all'istanza target $x_t$, classificandola erroneamente come $y_b$ \cite{cleanLaberPoisoning}.

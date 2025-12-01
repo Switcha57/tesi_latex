@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "LaTeX: latexmk build",
+      "type": "shell",
+      "command": "latexmk",
+      "args": [
+        "-pdf",
+        "-shell-escape",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-outdir=build",
+        "tesi.tex"
+      ],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "LaTeX: clean",
+      "type": "shell",
+      "command": "latexmk",
+      "args": [
+        "-C",
+        "-outdir=build"
+      ]
+    }
+  ]
+}
